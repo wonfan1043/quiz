@@ -23,11 +23,12 @@ import com.example.quiz.vo.AnswerReq;
 import com.example.quiz.vo.BaseRes;
 import com.example.quiz.vo.CreateOrUpdateReq;
 import com.example.quiz.vo.DeleteQuizReq;
+import com.example.quiz.vo.DeleteQusReq;
 import com.example.quiz.vo.SearchReq;
 import com.example.quiz.vo.SearchRes;
 import com.example.quiz.vo.StatisticsRes;
 
-public class QuizServiceImplNote implements QuizService {
+public class QuizServiceImplNote{
 
 	@Autowired
 	private QuizDao quizDao;
@@ -35,7 +36,6 @@ public class QuizServiceImplNote implements QuizService {
 	@Autowired
 	private AnswerDao answerDao;
 
-	@Override
 	public BaseRes create(CreateOrUpdateReq req) {
 // ▼▼▼▼▼▼▼▼▼▼ 防呆檢查 ▼▼▼▼▼▼▼▼▼▼
 		return checkParams(req, true);
@@ -55,7 +55,6 @@ public class QuizServiceImplNote implements QuizService {
 //		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
-	@Override
 	public SearchRes search(SearchReq req) {
 		// 如果沒有輸入問卷名稱就帶空字串，containing加上空字串代表搜尋除了null以外的所有資料
 		if (!StringUtils.hasText(req.getQuizName())) {
@@ -82,7 +81,6 @@ public class QuizServiceImplNote implements QuizService {
 		}
 	}
 
-	@Override
 	public BaseRes deleteQuiz(DeleteQuizReq req) {
 		// List屬於Collection，所以可以用他的語法同時判斷quizIds是否為null及空集合
 		// 判斷不是空的即可，即便quizIds有負數也沒關係，只要有一個正數就值得進入DB蒐資料
@@ -93,8 +91,7 @@ public class QuizServiceImplNote implements QuizService {
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
-	@Override
-	public BaseRes deleteQuestions(int quizId, List<Integer> quIds) {
+	public BaseRes deleteQuestions(DeleteQusReq req) {
 		// 1. 檢查傳入的資料是否有誤
 		// 2. 取出整張問卷，刪除不要的資料 or 只保留要留下的資料，如果找不到問卷就回傳錯誤訊息
 		// 3. 刪除資料庫中的整個問卷
@@ -102,11 +99,11 @@ public class QuizServiceImplNote implements QuizService {
 		// 5. 回傳成功訊息
 
 //1. 檢查傳入的資料是否有誤
-		if (quizId <= 0 || CollectionUtils.isEmpty(quIds)) {
+		if (req.getQuizId() <= 0 || CollectionUtils.isEmpty(req.getQuIds())) {
 			return new BaseRes(RtnCode.PARAM_ERROR.getCode(), RtnCode.PARAM_ERROR.getMessage());
 		}
 //2. 取出整張問卷，刪除不要的資料(方法一) or 只保留要留下的資料(方法二)，如果找不到問卷就回傳錯誤訊息
-		List<Quiz> res = quizDao.findByQuizIdAndPublishedFalseOrQuizIdAndStartDateAfterOrderByQuId(quizId, quizId,
+		List<Quiz> res = quizDao.findByQuizIdAndPublishedFalseOrQuizIdAndStartDateAfterOrderByQuId(req.getQuizId(), req.getQuizId(),
 				LocalDate.now());
 		if (res.isEmpty()) {
 			return new BaseRes(RtnCode.QUIZ_IS_NOT_FOUND.getCode(), RtnCode.QUIZ_IS_NOT_FOUND.getMessage());
@@ -116,7 +113,7 @@ public class QuizServiceImplNote implements QuizService {
 		// quids = 1 → j = 0 & item = 1 → item - 1 - j = 1 - 1 - 0 = 0 → 刪除res的index 0
 		// quids = 4 → j = 1 & item = 1 → item - 1 - j = 4 - 1 - 1 = 0 → 刪除res的index 2
 		int j = 0;
-		for (Integer item : quIds) {
+		for (Integer item : req.getQuIds()) {
 			res.remove(item - 1 - j);
 			j++;
 		}
@@ -129,7 +126,7 @@ public class QuizServiceImplNote implements QuizService {
 		// 如果quIds中不包含res的quId則加入retainList → 即保留不在刪除清單quIds中的資料
 		List<Quiz> retainList = new ArrayList<>();
 		for (Quiz item : res) {
-			if (!quIds.contains(item.getQuId())) {
+			if (!req.getQuIds().contains(item.getQuId())) {
 				retainList.add(item);
 			}
 		}
@@ -138,7 +135,7 @@ public class QuizServiceImplNote implements QuizService {
 			res.get(i).setQuId(i + 1);
 		}
 //3. 刪除資料庫中的整張問卷
-		quizDao.deleteByQuizId(quizId);
+		quizDao.deleteByQuizId(req.getQuizId());
 //4. 存入整張處理好的問卷，但前題是刪完後還有東西可以存
 //<方法一的話>
 		if (!retainList.isEmpty()) {
@@ -152,7 +149,6 @@ public class QuizServiceImplNote implements QuizService {
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
-	@Override
 	public BaseRes update(CreateOrUpdateReq req) {
 		return checkParams(req, false);
 ////1. 檢查傳入的資料是否為空
@@ -183,7 +179,6 @@ public class QuizServiceImplNote implements QuizService {
 //		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
-	@Override
 	public BaseRes answer(AnswerReq req) {
 // Step 1：檢查傳入的answerList有沒有東西
 		if (CollectionUtils.isEmpty(req.getAnswerList())) {
@@ -238,7 +233,6 @@ public class QuizServiceImplNote implements QuizService {
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
-	@Override
 	public StatisticsRes statistics(int quizId) {
 // Step 1：檢查參數是否正確
 		if (quizId <= 0) {
