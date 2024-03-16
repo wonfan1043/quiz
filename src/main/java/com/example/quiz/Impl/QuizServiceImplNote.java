@@ -22,6 +22,7 @@ import com.example.quiz.repository.QuizDao;
 import com.example.quiz.vo.AnswerReq;
 import com.example.quiz.vo.BaseRes;
 import com.example.quiz.vo.CreateOrUpdateReq;
+import com.example.quiz.vo.DeleteQuizReq;
 import com.example.quiz.vo.SearchReq;
 import com.example.quiz.vo.SearchRes;
 import com.example.quiz.vo.StatisticsRes;
@@ -82,13 +83,13 @@ public class QuizServiceImplNote implements QuizService {
 	}
 
 	@Override
-	public BaseRes deleteQuiz(List<Integer> quizIds) {
+	public BaseRes deleteQuiz(DeleteQuizReq req) {
 		// List屬於Collection，所以可以用他的語法同時判斷quizIds是否為null及空集合
 		// 判斷不是空的即可，即便quizIds有負數也沒關係，只要有一個正數就值得進入DB蒐資料
-		if (CollectionUtils.isEmpty(quizIds)) {
+		if (CollectionUtils.isEmpty(req.getQuizIds())) {
 			return new BaseRes(RtnCode.PARAM_ERROR.getCode(), RtnCode.PARAM_ERROR.getMessage());
 		}
-		quizDao.deleteByQuizIdInAndPublishedFalseOrQuizIdInAndStartDateAfter(quizIds, quizIds, LocalDate.now());
+		quizDao.deleteByQuizIdInAndPublishedFalseOrQuizIdInAndStartDateAfter(req.getQuizIds(), req.getQuizIds(), LocalDate.now());
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 

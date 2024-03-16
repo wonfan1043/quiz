@@ -14,6 +14,7 @@ import com.example.quiz.ifs.QuizService;
 import com.example.quiz.vo.AnswerReq;
 import com.example.quiz.vo.BaseRes;
 import com.example.quiz.vo.CreateOrUpdateReq;
+import com.example.quiz.vo.DeleteQuizReq;
 import com.example.quiz.vo.SearchReq;
 import com.example.quiz.vo.SearchRes;
 import com.example.quiz.vo.StatisticsRes;
@@ -36,8 +37,8 @@ public class QuizServiceController {
 	}
 	
 	@PostMapping(value = "quiz/delete_quiz")
-	public BaseRes deleteQuiz(List<Integer> quizIds) {
-		return quizService.deleteQuiz(quizIds);
+	public BaseRes deleteQuiz(DeleteQuizReq req) {
+		return quizService.deleteQuiz(req);
 	}
 	
 	

@@ -21,6 +21,7 @@ import com.example.quiz.ifs.QuizService;
 import com.example.quiz.repository.AnswerDao;
 import com.example.quiz.repository.QuizDao;
 import com.example.quiz.vo.CreateOrUpdateReq;
+import com.example.quiz.vo.DeleteQuizReq;
 import com.example.quiz.vo.SearchReq;
 import com.example.quiz.vo.AnswerReq;
 import com.example.quiz.vo.BaseRes;
@@ -67,11 +68,11 @@ public class QuizServiceImpl implements QuizService {
 	}
 
 	@Override
-	public BaseRes deleteQuiz(List<Integer> quizIds) {
-		if (CollectionUtils.isEmpty(quizIds)) {
+	public BaseRes deleteQuiz(DeleteQuizReq req) {
+		if (CollectionUtils.isEmpty(req.getQuizIds())) {
 			return new BaseRes(RtnCode.PARAM_ERROR.getCode(), RtnCode.PARAM_ERROR.getMessage());
 		}
-		quizDao.deleteByQuizIdInAndPublishedFalseOrQuizIdInAndStartDateAfter(quizIds, quizIds, LocalDate.now());
+		quizDao.deleteByQuizIdInAndPublishedFalseOrQuizIdInAndStartDateAfter(req.getQuizIds(), req.getQuizIds(), LocalDate.now());
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
