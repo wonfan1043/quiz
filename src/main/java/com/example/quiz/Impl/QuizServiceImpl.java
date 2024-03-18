@@ -6,9 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,14 +20,15 @@ import com.example.quiz.entity.Quiz;
 import com.example.quiz.ifs.QuizService;
 import com.example.quiz.repository.AnswerDao;
 import com.example.quiz.repository.QuizDao;
+import com.example.quiz.vo.AnswerReq;
+import com.example.quiz.vo.BaseRes;
 import com.example.quiz.vo.CreateOrUpdateReq;
 import com.example.quiz.vo.DeleteQuizReq;
 import com.example.quiz.vo.DeleteQusReq;
 import com.example.quiz.vo.SearchReq;
-import com.example.quiz.vo.AnswerReq;
-import com.example.quiz.vo.BaseRes;
 import com.example.quiz.vo.SearchRes;
 import com.example.quiz.vo.StatisticsRes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class QuizServiceImpl implements QuizService {
@@ -225,6 +225,22 @@ public class QuizServiceImpl implements QuizService {
 		} 		
 		return new StatisticsRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage(), quziIdAndAnsCountMap);
 	}
+	
+
+	@Override
+	public BaseRes objMapper(String str) {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			Quiz quiz = mapper.readValue(str, Quiz.class);
+		} catch (Exception e) {
+			//1.回傳固定錯誤訊息
+			//return new BaseRes(RtnCode.PARAM_ERROR.getCode(), RtnCode.PARAM_ERROR.getMessage());
+			//2.回傳catch中exception中的錯誤訊息
+			return new BaseRes(RtnCode.ERROR_CODE, e.getMessage());
+		}
+		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
+	}
+
 
 	/* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ 私有方法們 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
 
@@ -267,13 +283,21 @@ public class QuizServiceImpl implements QuizService {
 					req.getQuizList().get(0).getQuizId(), LocalDate.now())) {
 				return new BaseRes(RtnCode.QUIZ_IS_NOT_FOUND.getCode(), RtnCode.QUIZ_IS_NOT_FOUND.getMessage());
 			}
-			quizDao.deleteByQuizId(req.getQuizList().get(0).getQuizId());
+			try{
+				quizDao.deleteByQuizId(req.getQuizList().get(0).getQuizId());
+			} catch(Exception e) {
+				return new BaseRes(RtnCode.DELETE_QUIZ_ERROR.getCode(), RtnCode.DELETE_QUIZ_ERROR.getMessage());
+			}
 		}
 
 		for (Quiz item : req.getQuizList()) {
 			item.setPublished(req.isPublished());
 		}
-		quizDao.saveAll(req.getQuizList());
+		try {
+			quizDao.saveAll(req.getQuizList());
+		} catch(Exception e) {
+			return new BaseRes(RtnCode.SAVE_QUIZ_ERROR.getCode(), RtnCode.SAVE_QUIZ_ERROR.getMessage());
+		}
 		return new BaseRes(RtnCode.SUCCESS.getCode(), RtnCode.SUCCESS.getMessage());
 	}
 
